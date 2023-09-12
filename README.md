@@ -29,3 +29,9 @@ This project uses Python 3.11+ and [Poetry](https://python-poetry.org/). Assumin
 ```bash
 poetry install
 ```
+
+You can run the unit tests with
+
+```bash
+pytest tests/
+```

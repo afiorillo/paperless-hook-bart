@@ -16,9 +16,11 @@ pydantic = "^2.3.0"
 typer = "^0.9.0"
 pydantic-settings = "^2.0.3"
 requests = "^2.31.0"
+pandas = "^2.1.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.9.1"
+pytest = "^7.4.2"
 
 [build-system]
 requires = ["poetry-core"]
