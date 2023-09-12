@@ -35,5 +35,3 @@ You can run the unit tests with
 ```bash
 pytest tests/
 ```
-
-Now this line really shouldn't exist.
