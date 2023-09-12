@@ -22,6 +22,14 @@ poetry run post_consume_script
 
 **Note:** this will almost certainly have to change to improve portability.
 
+## Contributing
+
+This is an open source project and contributions are welcome!
+Some basic ground rules:
+
+- Please make all contributions through a PR. This enables discussing the changes *before* accepting them.
+- Please be polite and civil. This is a volunteer project and it ought to be fun.
+
 ### Developing
 
 This project uses Python 3.11+ and [Poetry](https://python-poetry.org/). Assuming you have these installed, preparing the developing environment should just be:
