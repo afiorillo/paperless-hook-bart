@@ -9,6 +9,14 @@ This project is experimental, so expect rough edges.
 Currently you can run the script by preparing the development environment (`poetry install`, documented below) and running
 
 ```bash
+# you must provide credentials to access the paperless server
+# see https://docs.paperless-ngx.com/api/#authorization for details
+# go to "$PAPERLESS_BASE_URL/admin/authtoken/tokenproxy/" to create a token
+export PAPERLESS_BASE_URL="http://..."
+export PAPERLESS_TOKEN="abcd1234..."
+# the hook provides a DOCUMENT_ID to specify which document was just consumed
+export DOCUMENT_ID="1"
+# and finally, you can run the hook
 poetry run post_consume_script
 ```
 
