@@ -34,10 +34,3 @@ class InMemoryVectorStore:
         largest_to_smallest = np.array(list(reversed(smallest_to_largest)))  # FIXME
         top_n = largest_to_smallest[:nearest_n]
         return self.df.loc[top_n]
-
-    @staticmethod
-    def chunk(string: str) -> list[str]:
-        """Breaks a long input string into one or more smaller ones."""
-        # TODO this implementation is naive, loses context. Some nicer interleaving of contents is preferable.
-        chunksize = 800
-        return [string[i : i + chunksize] for i in range(0, len(string), chunksize)]
