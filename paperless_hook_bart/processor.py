@@ -57,3 +57,14 @@ class Processor:
         for vec in vectors:
             self.store.store(vec, document_id=doc.id)
         return IngestionResult(1, len(vectors))
+
+    def search(self, searchstring: str, max_results: int = 5) -> list[dict]:
+        searchvecs = self.embedder.get_embeddings(searchstring)
+        # TODO long search strings would require supporting searching with all the vectors
+        # from each chunk and combining them in a clever way. For now we just support short
+        # search strings.
+        searchvec = searchvecs[0]
+
+        results = self.store.nearest_neighbors(searchvec, nearest_n=max_results)
+        # return the results in order, excluding the embedding itself
+        return results.drop('embedding', axis=1).to_dict('records')
