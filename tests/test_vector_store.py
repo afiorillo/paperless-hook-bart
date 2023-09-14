@@ -1,3 +1,5 @@
+import numpy as np
+
 from paperless_hook_bart.vector_store import InMemoryVectorStore
 
 
@@ -13,3 +15,13 @@ def test_vector_store_happy_path_3d():
     assert result.loc[similar_indices[0]].color == "red"
     assert result.loc[similar_indices[0]].is_red
     assert result.loc[similar_indices[1]].color == "brown"
+
+def test_vector_store_happy_path_1024d():
+    vs = InMemoryVectorStore()
+    # seed some search corpus
+    for idx in range(1000):
+        vec = np.random.random(1024)
+        vs.store(vec, idx=idx)
+    
+    result = vs.nearest_neighbors(np.ones(1024), nearest_n=5)
+    assert result.shape[0] == 5  # because we wanted 5 results
