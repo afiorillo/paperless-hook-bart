@@ -21,6 +21,7 @@ transformers = { extras = ["torch"], version = "^4.33.1" }
 # we need to explicitly avoid this version of pytorch because of a bug
 # https://github.com/pytorch/pytorch/issues/100974
 torch = "!=2.0.1"
+pyarrow = "^13.0.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.9.1"

@@ -1,6 +1,9 @@
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
 import numpy as np
 
-from paperless_hook_bart.vector_store import InMemoryVectorStore
+from paperless_hook_bart.vector_store import InMemoryVectorStore, DiskVectorStore
 
 
 def test_vector_store_happy_path_3d():
@@ -25,3 +28,15 @@ def test_vector_store_happy_path_1024d():
     
     result = vs.nearest_neighbors(np.ones(1024), nearest_n=5)
     assert result.shape[0] == 5  # because we wanted 5 results
+
+def test_persistent_vector_store():
+    with TemporaryDirectory() as tmpdir:
+        filepath = Path(tmpdir, 'vectorstore.parquet')
+
+        # we may create an instance of this and store vectors, those end up on disk
+        vs = DiskVectorStore(filepath)
+        vs.store([1, 2, 3], food='pizza')
+        # later we may create a new instance and retrieve those vectors
+        vs2 = DiskVectorStore(filepath)
+        result = vs.nearest_neighbors([1, 2, 3])
+        assert result.loc[0].food == 'pizza'

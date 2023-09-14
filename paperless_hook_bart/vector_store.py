@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
@@ -34,3 +36,30 @@ class InMemoryVectorStore:
         largest_to_smallest = np.array(list(reversed(smallest_to_largest)))  # FIXME
         top_n = largest_to_smallest[:nearest_n]
         return self.df.loc[top_n]
+
+class DiskVectorStore(InMemoryVectorStore):
+    """
+    A persistent vector store that writes to disk whenever a vector is added.
+    Stores the dataframe as a Parquet format.
+    """
+
+    def read_file(self):
+        self.df = pd.read_parquet(self.filepath)
+
+    def write_file(self):
+        self.df.to_parquet(self.filepath)
+
+    def __init__(self, filepath: Path):
+        self.filepath = Path(filepath)
+        
+        if self.filepath.exists():
+            self.read_file()
+        else:
+            # let's start with an empty corpus and write it to disk
+            self.df = pd.DataFrame()
+            self.write_file()
+
+    def store(self, vector: list[float], **metadata):
+        super().store(vector, **metadata)
+        self.write_file()
+    
