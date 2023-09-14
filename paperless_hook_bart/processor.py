@@ -66,5 +66,9 @@ class Processor:
         searchvec = searchvecs[0]
 
         results = self.store.nearest_neighbors(searchvec, nearest_n=max_results)
+        # TODO here is probably the one of the places to address duplicates in the vector store.
+        # In the results we should probably remove any matches for the same document after the first, e.g.
+        # if the top 2 are for document 1, then document 2 -- we should just show [1, 2].
+
         # return the results in order, excluding the embedding itself
         return results.drop('embedding', axis=1).to_dict('records')

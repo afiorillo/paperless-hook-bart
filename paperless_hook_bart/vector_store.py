@@ -14,6 +14,9 @@ class InMemoryVectorStore:
         self.df = pd.DataFrame()
 
     def store(self, vector: list[float], **metadata):
+        # TODO some basic duplicate checking should be done here. If the same vector is stored twice,
+        # then the search computations become more expensive for no benefit.
+
         # jam this vector in as another row, incrementing the index
         self.df = pd.concat(
             [self.df, pd.DataFrame({"embedding": [vector], **metadata})],
