@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Iterator
 
 import requests
 from pydantic import BaseModel
@@ -31,3 +32,17 @@ class PaperlessClient:
         resp = self.session.get(full_url)
         resp.raise_for_status()
         return PaperlessDocument.parse_raw(resp.content)
+
+    def iter_all_documents(self) -> Iterator[PaperlessDocument]:
+        full_url = f'{self.base_url}/api/documents/?format=json'
+        while full_url is not None:
+            resp = self.session.get(full_url)
+            payload = resp.json()
+            docs = payload.get('results', [])
+            for doc in docs:
+                yield PaperlessDocument.parse_obj(doc)
+            
+            full_url = payload.get('next', None)
+            if full_url is not None:
+                # we want to add this query param to get JSON back
+                full_url += '&format=json'

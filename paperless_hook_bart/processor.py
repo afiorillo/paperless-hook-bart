@@ -1,4 +1,4 @@
-from typing import NamedTuple
+from typing import NamedTuple, Iterator
 
 from requests.exceptions import RequestException
 from pydantic import ValidationError, parse_obj_as
@@ -60,6 +60,22 @@ class Processor:
             if res is not None:
                 vecs_stored += 1
         return IngestionResult(1, vecs_stored)
+
+    def iter_ingest_all_documents(self) -> Iterator[IngestionResult]:
+        for doc in self.client.iter_all_documents():
+            contents = doc.content
+            if not contents:
+                continue
+                # raise UnreadableDocument(f"document is empty? {doc.id}")
+
+            vectors = self.embedder.get_embeddings(contents)
+            vecs_stored = 0
+            for vec in vectors:
+                res = self.store.store(vec, **doc.dict())
+                if res is not None:
+                    vecs_stored += 1
+            yield IngestionResult(1, vecs_stored)
+
 
     def search(self, searchstring: str, max_results: int = 5) -> list[PaperlessDocument]:
         searchvecs = self.embedder.get_embeddings(searchstring)
