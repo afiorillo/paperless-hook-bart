@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import requests
 from pydantic import BaseModel
 
@@ -5,6 +7,8 @@ from pydantic import BaseModel
 class PaperlessDocument(BaseModel):
     id: int
     content: str
+    title: str
+    added: datetime
 
 
 class PaperlessClient:

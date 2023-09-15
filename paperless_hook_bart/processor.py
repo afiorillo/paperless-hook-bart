@@ -1,10 +1,10 @@
 from typing import NamedTuple
 
 from requests.exceptions import RequestException
-from pydantic import ValidationError
+from pydantic import ValidationError, parse_obj_as
 
 from paperless_hook_bart.embeddings import BartEmbedder
-from paperless_hook_bart.paperless_client import PaperlessClient
+from paperless_hook_bart.paperless_client import PaperlessClient, PaperlessDocument
 from paperless_hook_bart.settings import PaperlessServerSettings
 from paperless_hook_bart.vector_store import DiskVectorStore
 
@@ -56,12 +56,12 @@ class Processor:
         vectors = self.embedder.get_embeddings(contents)
         vecs_stored = 0
         for vec in vectors:
-            res = self.store.store(vec, document_id=doc.id)
+            res = self.store.store(vec, **doc.dict())
             if res is not None:
                 vecs_stored += 1
         return IngestionResult(1, vecs_stored)
 
-    def search(self, searchstring: str, max_results: int = 5) -> list[dict]:
+    def search(self, searchstring: str, max_results: int = 5) -> list[PaperlessDocument]:
         searchvecs = self.embedder.get_embeddings(searchstring)
         # TODO long search strings would require supporting searching with all the vectors
         # from each chunk and combining them in a clever way. For now we just support short
@@ -74,4 +74,7 @@ class Processor:
         # if the top 2 are for document 1, then document 2 -- we should just show [1, 2].
 
         # return the results in order, excluding the embedding itself
-        return results.drop('embedding', axis=1).to_dict('records')
+        
+        # TODO this should handle backwards compatibility better. As-is, if any of the results contain data
+        # from an older structure version (missing required fields) then the whole thing will crash.
+        return parse_obj_as(list[PaperlessDocument], results.drop('embedding', axis=1).to_dict('records'))

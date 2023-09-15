@@ -18,11 +18,13 @@ def main():
         TextColumn("[progress.description]{task.description}"),
         transient=True,
     ) as progress:
-        progress.add_task(description="Loading model...", total=None)
+        taskid = progress.add_task(description="Loading model...", total=None)
         proc = Processor(paperless_settings)
+        progress.remove_task(taskid)
 
-        progress.add_task(description="Searching...", total=None)
+        taskid = progress.add_task(description="Searching...", total=None)
         results = proc.search(query)
+        progress.remove_task(taskid)
 
     table = Table(title='Results')
     table.add_column("Document ID")
@@ -30,9 +32,7 @@ def main():
     table.add_column("Link")
 
     for result in results:
-        # TODO it'd be really nice to just parse this result back (or know it's the right format all along)
-        # Then we wouldn't need to stringify etc and could attach extra properties just based on document ID.
-        table.add_row(str(result['document_id']), 'foo', 'https://example.com')
+        table.add_row(str(result.id), result.title, 'https://example.com')
 
     console = Console()
     console.print(table)
