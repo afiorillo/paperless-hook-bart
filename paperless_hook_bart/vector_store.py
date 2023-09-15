@@ -14,7 +14,7 @@ class InMemoryVectorStore:
         self.df = pd.DataFrame()
 
     def store(self, vector: list[float], **metadata):
-        if self.df['embedding'].apply(lambda testvec: (vector == testvec).all()).any():
+        if ('embedding' in self.df.columns) and (self.df['embedding'].apply(lambda testvec: (vector == testvec).all()).any()):
             # FIXME there is probably a way to do this without an .apply() which slows things down
             # This also essentially prevents updates, but doing update logic would be tricky.
             # E.g. find duplicates, find the document ID associated, update all of those rows.
