@@ -14,14 +14,19 @@ class InMemoryVectorStore:
         self.df = pd.DataFrame()
 
     def store(self, vector: list[float], **metadata):
-        # TODO some basic duplicate checking should be done here. If the same vector is stored twice,
-        # then the search computations become more expensive for no benefit.
+        if self.df['embedding'].apply(lambda testvec: (vector == testvec).all()).any():
+            # FIXME there is probably a way to do this without an .apply() which slows things down
+            # This also essentially prevents updates, but doing update logic would be tricky.
+            # E.g. find duplicates, find the document ID associated, update all of those rows.
+            # What if mutiple document IDs etc?
+            return None
 
         # jam this vector in as another row, incrementing the index
         self.df = pd.concat(
             [self.df, pd.DataFrame({"embedding": [vector], **metadata})],
             ignore_index=True,
         )
+        return self.df.index[-1]
 
     def nearest_neighbors(self, vector: list[float], nearest_n: int = 5):
         """Use Cosine similarity to find the N nearest vectors."""
@@ -63,6 +68,9 @@ class DiskVectorStore(InMemoryVectorStore):
             self.write_file()
 
     def store(self, vector: list[float], **metadata):
-        super().store(vector, **metadata)
-        self.write_file()
+        res = super().store(vector, **metadata)
+        if res is not None:
+            # we only need to sync if there are changes 
+            self.write_file()
+        return res
     
