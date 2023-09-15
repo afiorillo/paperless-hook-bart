@@ -3,12 +3,16 @@ from datetime import datetime
 import requests
 from pydantic import BaseModel
 
+from paperless_hook_bart.settings import PaperlessServerSettings
 
 class PaperlessDocument(BaseModel):
     id: int
     content: str
     title: str
     added: datetime
+
+    def url(self, paperless_settings: PaperlessServerSettings):
+        return f'{paperless_settings.paperless_base_url}/documents/{self.id}/details'
 
 
 class PaperlessClient:

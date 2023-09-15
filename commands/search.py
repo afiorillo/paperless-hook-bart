@@ -32,7 +32,7 @@ def main():
     table.add_column("Link")
 
     for result in results:
-        table.add_row(str(result.id), result.title, 'https://example.com')
+        table.add_row(str(result.id), result.title, result.url(paperless_settings))
 
     console = Console()
     console.print(table)
