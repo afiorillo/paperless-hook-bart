@@ -28,7 +28,7 @@ class InMemoryVectorStore:
         )
         return self.df.index[-1]
 
-    def nearest_neighbors(self, vector: list[float], nearest_n: int = 5):
+    def nearest_neighbors(self, vector: list[float], nearest_n: int = 5) -> pd.DataFrame:
         """Use Cosine similarity to find the N nearest vectors."""
         # dump the whole search corpus into a big 2D matrix
         corpus = np.stack(self.df["embedding"].to_numpy())

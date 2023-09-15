@@ -68,13 +68,13 @@ class Processor:
         # search strings.
         searchvec = searchvecs[0]
 
-        results = self.store.nearest_neighbors(searchvec, nearest_n=max_results)
-        # TODO here is probably the one of the places to address duplicates in the vector store.
-        # In the results we should probably remove any matches for the same document after the first, e.g.
-        # if the top 2 are for document 1, then document 2 -- we should just show [1, 2].
+        # the NN search may return multiple vectors for the same document, so we want to deduplicate
+        # with only one result per document ID
+        results = self.store.nearest_neighbors(searchvec, nearest_n=10*max_results)
+        results.drop_duplicates('id', keep='first', inplace=True)
 
         # return the results in order, excluding the embedding itself
-        
+
         # TODO this should handle backwards compatibility better. As-is, if any of the results contain data
         # from an older structure version (missing required fields) then the whole thing will crash.
         return parse_obj_as(list[PaperlessDocument], results.drop('embedding', axis=1).to_dict('records'))
