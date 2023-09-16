@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
@@ -12,13 +14,21 @@ class InMemoryVectorStore:
         self.df = pd.DataFrame()
 
     def store(self, vector: list[float], **metadata):
+        if ('embedding' in self.df.columns) and (self.df['embedding'].apply(lambda testvec: np.all(vector == testvec)).any()):
+            # FIXME there is probably a way to do this without an .apply() which slows things down
+            # This also essentially prevents updates, but doing update logic would be tricky.
+            # E.g. find duplicates, find the document ID associated, update all of those rows.
+            # What if mutiple document IDs etc?
+            return None
+
         # jam this vector in as another row, incrementing the index
         self.df = pd.concat(
             [self.df, pd.DataFrame({"embedding": [vector], **metadata})],
             ignore_index=True,
         )
+        return self.df.index[-1]
 
-    def nearest_neighbors(self, vector: list[float], nearest_n: int = 5):
+    def nearest_neighbors(self, vector: list[float], nearest_n: int = 5) -> pd.DataFrame:
         """Use Cosine similarity to find the N nearest vectors."""
         # dump the whole search corpus into a big 2D matrix
         corpus = np.stack(self.df["embedding"].to_numpy())
@@ -35,9 +45,32 @@ class InMemoryVectorStore:
         top_n = largest_to_smallest[:nearest_n]
         return self.df.loc[top_n]
 
-    @staticmethod
-    def chunk(string: str) -> list[str]:
-        """Breaks a long input string into one or more smaller ones."""
-        # TODO this implementation is naive, loses context. Some nicer interleaving of contents is preferable.
-        chunksize = 800
-        return [string[i : i + chunksize] for i in range(0, len(string), chunksize)]
+class DiskVectorStore(InMemoryVectorStore):
+    """
+    A persistent vector store that writes to disk whenever a vector is added.
+    Stores the dataframe as a Parquet format.
+    """
+
+    def read_file(self):
+        self.df = pd.read_parquet(self.filepath)
+
+    def write_file(self):
+        self.df.to_parquet(self.filepath)
+
+    def __init__(self, filepath: Path):
+        self.filepath = Path(filepath)
+        
+        if self.filepath.exists():
+            self.read_file()
+        else:
+            # let's start with an empty corpus and write it to disk
+            self.df = pd.DataFrame()
+            self.write_file()
+
+    def store(self, vector: list[float], **metadata):
+        res = super().store(vector, **metadata)
+        if res is not None:
+            # we only need to sync if there are changes 
+            self.write_file()
+        return res
+    

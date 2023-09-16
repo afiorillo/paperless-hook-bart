@@ -1,8 +1,9 @@
 #!/usr/bin/env python
+import rich
 import typer
 
 from paperless_hook_bart.paperless_client import PaperlessClient
-from paperless_hook_bart.processor import ingest_document
+from paperless_hook_bart.processor import Processor
 from paperless_hook_bart.settings import (
     PostConsumeHookSettings,
     PaperlessServerSettings,
@@ -15,13 +16,12 @@ def main():
     # we also expect for now the token is just provided magically
     paperless_settings = PaperlessServerSettings()
     # create a client
-    client = PaperlessClient(
-        base_url=str(paperless_settings.paperless_base_url),
-        token=paperless_settings.paperless_token,
-    )
-    # and actually process the document
-    ingest_document(client, hook_settings.document_id)
-
+    proc = Processor(paperless_settings)
+    result = proc.ingest_document_by_id(hook_settings.document_id)
+    rich.print(f'Ingested [green]{result.ingested_documents}[/green] documents with [green]{result.ingested_vectors}[/green] vectors')
 
 def typer_main():
     typer.run(main)
+
+if __name__ == "__main__":
+    typer_main()
