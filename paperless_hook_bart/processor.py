@@ -37,10 +37,9 @@ class Processor:
             self._embedder = BartEmbedder()
         return self._embedder
 
-    def ingest_document(self, document_id: int) -> IngestionResult:
+    def ingest_document_by_id(self, document_id: int) -> IngestionResult:
         """
-        Fetches data for an already consumed document in Paperless and stores its embeddings
-        in the vector store.
+        Fetches the document and metadata from Paperless, and then ingests it.
         """
         try:
             doc = self.client.get_document(document_id)
@@ -48,34 +47,28 @@ class Processor:
             raise IngestionError("unable to fetch from paperless server") from err
         except ValidationError as err:
             raise IngestionError("unable to parse response") from err
+        return self.ingest_document(doc)
 
-        contents = doc.content
+
+    def ingest_document(self, document: PaperlessDocument) -> IngestionResult:
+        """
+        Store the embeddings of a given Paperless document into the vector store, along with metadata.
+        """
+        contents = document.content
         if not contents:
-            raise UnreadableDocument(f"document is empty? {doc.id}")
+            raise UnreadableDocument(f"document is empty? {document.id}")
+        
+        if document.id in self.store.df['id']:
+            # if the document was already ingested, we can skip embedding it
+            return IngestionResult(1, 0)
 
         vectors = self.embedder.get_embeddings(contents)
         vecs_stored = 0
         for vec in vectors:
-            res = self.store.store(vec, **doc.dict())
+            res = self.store.store(vec, **document.dict())
             if res is not None:
                 vecs_stored += 1
         return IngestionResult(1, vecs_stored)
-
-    def iter_ingest_all_documents(self) -> Iterator[IngestionResult]:
-        for doc in self.client.iter_all_documents():
-            contents = doc.content
-            if not contents:
-                continue
-                # raise UnreadableDocument(f"document is empty? {doc.id}")
-
-            vectors = self.embedder.get_embeddings(contents)
-            vecs_stored = 0
-            for vec in vectors:
-                res = self.store.store(vec, **doc.dict())
-                if res is not None:
-                    vecs_stored += 1
-            yield IngestionResult(1, vecs_stored)
-
 
     def search(self, searchstring: str, max_results: int = 5) -> list[PaperlessDocument]:
         searchvecs = self.embedder.get_embeddings(searchstring)

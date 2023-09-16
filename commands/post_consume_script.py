@@ -17,7 +17,7 @@ def main():
     paperless_settings = PaperlessServerSettings()
     # create a client
     proc = Processor(paperless_settings)
-    result = proc.ingest_document(hook_settings.document_id)
+    result = proc.ingest_document_by_id(hook_settings.document_id)
     rich.print(f'Ingested [green]{result.ingested_documents}[/green] documents with [green]{result.ingested_vectors}[/green] vectors')
 
 def typer_main():

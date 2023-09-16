@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 import rich
-from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TaskProgressColumn, TimeRemainingColumn
 import typer
 
-from paperless_hook_bart.processor import Processor
+from paperless_hook_bart.processor import Processor, UnreadableDocument
 from paperless_hook_bart.settings import (
     PaperlessServerSettings,
 )
@@ -26,13 +26,21 @@ def main():
         proc = Processor(paperless_settings)
         progress.remove_task(taskid)
 
-        taskid = progress.add_task(description="Backfilling...", total=None)
+    with Progress(
+        TextColumn("[progress.description]{task.description} {task.completed}/{task.total}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        TimeRemainingColumn(),
+    ) as progress:
         docs_ingested, vecs_ingested = 0, 0
-        for res in proc.iter_ingest_all_documents():
-            progress.update(taskid, advance=1)
+        doc_iterator = proc.client.iter_all_documents()
+        for document in progress.track(doc_iterator, description='Backfilling...'):
+            try:
+                res = proc.ingest_document(document)
+            except UnreadableDocument:
+                pass  # just skip those?
             docs_ingested += 1
             vecs_ingested += res.ingested_vectors
-        progress.remove_task(taskid)
 
     rich.print(f'Ingested [green]{docs_ingested}[/green] documents with [green]{vecs_ingested}[/green] vectors.')    
 
